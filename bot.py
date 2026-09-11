@@ -7,11 +7,11 @@ Runs on a schedule (see .github/workflows/run.yml). Each run:
   2. Reads reaction emoji on task messages -> updates status, routes
      notifications to the right channel.
   3. Reads thread replies tagged [waiting]/[next]/[deliverable]/
-     [summary]/[notes] -> fills in the matching field.
+     [summary]/[notes]/[status] -> fills in the matching field.
   4. Reads Pamela's ✅/🔁 reactions on #pamela-approval posts -> handles
      the approve / changes-requested branch.
   5. Refreshes the pinned Task Board message in #charlene-tasks.
-  6. On Saturdays, posts + DMs the weekly report (once per day).
+  6. On Saturdays, posts the weekly report to #monday-email (once per day).
 
 All task data lives in tasks.json, committed back to the repo by the
 GitHub Action after this script runs. There is no external database.
@@ -157,7 +157,9 @@ def intake_new_tasks(client, tasks, state):
             f":hammer_and_wrench: In Progress · :hourglass_flowing_sand: Pending · "
             f":raising_hand: Waiting on Pamela · :eyes: For Pamela Approval · "
             f":package: Parked · :white_check_mark: Completed\n"
-            f"_Reply in this thread with `[waiting] ...`, `[next] ...`, `[deliverable] ...`, "
+            f"_Or reply in this thread with `[status] Waiting on Pamela` (etc. — exact status name) "
+            f"if reactions are fiddly._\n"
+            f"_Reply with `[waiting] ...`, `[next] ...`, `[deliverable] ...`, "
             f"`[summary] ...`, or `[notes] ...` to fill in detail fields._"
         )
         safe_call(client.chat_postMessage, channel=channel, thread_ts=msg["ts"], text=confirmation)
@@ -268,7 +270,24 @@ def process_thread_replies(client, tasks, state):
                 continue
             text = msg.get("text", "").strip()
             lower = text.lower()
-            if lower.startswith(cfg.TAG_WAITING_ON):
+            if lower.startswith(cfg.TAG_STATUS):
+                requested = text[len(cfg.TAG_STATUS):].strip()
+                match = next((s for s in cfg.VALID_STATUSES if s.lower() == requested.lower()), None)
+                if match and match != task["status"]:
+                    print(f"[{task['task_id']}] [status] reply: {task['status']} -> {match}")
+                    task["status"] = match
+                    route_notification(client, tasks, task, match)
+                elif not match:
+                    safe_call(
+                        client.chat_postMessage,
+                        channel=cfg.CHANNEL_CHARLENE_TASKS,
+                        thread_ts=task["message_ts"],
+                        text=(
+                            f"Didn't recognize status '{requested}'. Valid options: "
+                            + ", ".join(cfg.VALID_STATUSES)
+                        ),
+                    )
+            elif lower.startswith(cfg.TAG_WAITING_ON):
                 task["waiting_on"] = text[len(cfg.TAG_WAITING_ON):].strip()
             elif lower.startswith(cfg.TAG_NEXT_STEP):
                 task["next_step"] = text[len(cfg.TAG_NEXT_STEP):].strip()
@@ -438,14 +457,10 @@ def maybe_send_weekly_report(client, tasks, state):
         return
     today = now.strftime("%Y-%m-%d")
     if state.get("last_weekly_report_date") == today:
-        return
+        return  # already sent today
 
     report = build_weekly_report(tasks)
-    safe_call(client.chat_postMessage, channel=cfg.CHANNEL_PRODUCTION_STATUS, text=report)
-
-    dm = safe_call(client.conversations_open, users=[cfg.PAMELA_USER_ID])
-    if dm and dm.get("ok"):
-        safe_call(client.chat_postMessage, channel=dm["channel"]["id"], text=report)
+    safe_call(client.chat_postMessage, channel=cfg.CHANNEL_MONDAY_EMAIL, text=report)
 
     state["last_weekly_report_date"] = today
 
