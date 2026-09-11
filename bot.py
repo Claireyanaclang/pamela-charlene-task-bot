@@ -231,12 +231,19 @@ def process_reactions(client, tasks, state):
             timestamp=task["message_ts"],
         )
         if not resp or not resp.get("ok"):
+            print(f"[{task['task_id']}] reactions_get did not return ok: {resp}")
             continue
         reactions = resp.get("message", {}).get("reactions", [])
+        print(f"[{task['task_id']}] current reactions on file: {[r['name'] for r in reactions]}")
         new_status = resolve_status_from_reactions(reactions)
         if new_status and new_status != task["status"]:
+            print(f"[{task['task_id']}] STATUS CHANGE: {task['status']} -> {new_status}")
             task["status"] = new_status
             route_notification(client, tasks, task, new_status)
+        elif new_status:
+            print(f"[{task['task_id']}] resolved status '{new_status}' matches current status, no change")
+        else:
+            print(f"[{task['task_id']}] no recognized status emoji found")
 
 
 # ------------------------------------------- 3. thread replies -> fields --
@@ -301,7 +308,6 @@ def process_approval_reactions(client, tasks, state):
             safe_call(client.chat_postMessage, channel=cfg.CHANNEL_COMPLETED_TASKS, text=text)
 
         elif "arrows_counterclockwise" in names:
-            # Pull Pamela's feedback from the thread on the approval post, if any.
             feedback = task.get("review_notes", "")
             replies = safe_call(
                 client.conversations_replies,
@@ -359,8 +365,6 @@ def update_task_board(client, tasks, state):
 # ---------------------------------------------------- 6. weekly report --
 def build_weekly_report(tasks):
     today = datetime.now(TZ).date()
-    # This runs on a Saturday (weekday() == 5). Monday of the SAME week is
-    # 5 days earlier; that week's Friday is the day before today.
     weekday = today.weekday()  # Monday=0 ... Saturday=5 ... Sunday=6
     monday = today - timedelta(days=weekday)
     friday = monday + timedelta(days=4)
@@ -386,9 +390,6 @@ def build_weekly_report(tasks):
         return f"• `{t['task_id']}` {t['task_name']}{extra}"
 
     def section(items, formatter=fmt):
-        """Return formatted lines for a section, or a single 'None' line
-        if the section is empty. Always returns a list, so it's safe to
-        splat with `*section(...)` below."""
         return [formatter(t) for t in items] if items else ["_None_"]
 
     lines = [
@@ -437,7 +438,7 @@ def maybe_send_weekly_report(client, tasks, state):
         return
     today = now.strftime("%Y-%m-%d")
     if state.get("last_weekly_report_date") == today:
-        return  # already sent today
+        return
 
     report = build_weekly_report(tasks)
     safe_call(client.chat_postMessage, channel=cfg.CHANNEL_PRODUCTION_STATUS, text=report)
