@@ -17,15 +17,9 @@ CHANNEL_PRODUCTION_STATUS = "C0C12EHLKKK"
 
 # --- People -------------------------------------------------------------
 PAMELA_USER_ID = "U0C123A3U68"
-# NOTE: verify this is actually Charlene's ID before relying on it —
-# it was the "current logged in user" at build time, confirm in Slack
-# (click your own profile -> "Copy member ID").
 CHARLENE_USER_ID = "U0C126ZT82G"
 
 # --- Status <-> emoji reaction mapping -----------------------------------
-# Charlene sets these by reacting on the task's own message in
-# #charlene-tasks. Reacting with a NEW emoji from this list overwrites
-# the task's status (the bot always looks at the most recent one added).
 STATUS_EMOJI = {
     "hammer_and_wrench": "In Progress",         # 🛠️
     "hourglass_flowing_sand": "Pending",        # ⏳
@@ -34,25 +28,27 @@ STATUS_EMOJI = {
     "package": "Parked",                        # 📦
     "white_check_mark": "Completed",            # ✅
 }
-# Reverse lookup, used when the bot posts "react with X" instructions.
 EMOJI_FOR_STATUS = {v: k for k, v in STATUS_EMOJI.items()}
 
-# Reactions Pamela adds on the bot's post inside #pamela-approval.
 APPROVAL_EMOJI = {
     "white_check_mark": "approved",
     "arrows_counterclockwise": "changes_requested",
 }
 
 # --- Thread-reply tags ---------------------------------------------------
-# Charlene supplies extra detail by replying in a task's thread with a
-# message that STARTS with one of these tags (case-insensitive).
 TAG_WAITING_ON = "[waiting]"
 TAG_NEXT_STEP = "[next]"
 TAG_DELIVERABLE = "[deliverable]"
 TAG_SUMMARY = "[summary]"
 TAG_NOTES = "[notes]"
+TAG_STATUS = "[status]"
 
-ALL_TAGS = [TAG_WAITING_ON, TAG_NEXT_STEP, TAG_DELIVERABLE, TAG_SUMMARY, TAG_NOTES]
+ALL_TAGS = [TAG_WAITING_ON, TAG_NEXT_STEP, TAG_DELIVERABLE, TAG_SUMMARY, TAG_NOTES, TAG_STATUS]
+
+VALID_STATUSES = [
+    "New", "In Progress", "Pending", "Waiting on Pamela",
+    "For Pamela Approval", "Changes Requested", "Parked", "Completed",
+]
 
 # --- Files used as the "database" ----------------------------------------
 TASKS_FILE = "tasks.json"
