@@ -1,0 +1,37 @@
+name: Seed backlog (run once)
+
+# This workflow does NOT run on a schedule. Trigger it manually,
+# exactly once, from the Actions tab -> "Seed backlog (run once)" ->
+# "Run workflow". It's safe to click twice by accident; already-seeded
+# tasks are skipped automatically.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Seed backlog
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: python seed_tasks.py
+
+      - name: Commit seeded task data
+        run: |
+          git config user.name "task-bot"
+          git config user.email "task-bot@users.noreply.github.com"
+          git add tasks.json state.json
+          git diff --quiet --cached || git commit -m "Seed 13 backlog tasks"
+          git push
