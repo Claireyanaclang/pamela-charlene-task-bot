@@ -256,7 +256,7 @@
     "task_id": "CT-20260911-12",
     "task_name": "Apply Chris Donnelly framework to LinkedIn content",
     "instructions": "Review the Chris Donnelly Claude project and use the strategy/framework there for LinkedIn content development.",
-    "status": "In Progress",
+    "status": "For Pamela Approval",
     "priority": "Normal",
     "date_received": "2026-09-11",
     "due_date": "No deadline",
@@ -271,7 +271,7 @@
     "completion_date": "",
     "message_channel": "C0C16B1FMK3",
     "message_ts": "1789116346.993349",
-    "approval_message_ts": null,
+    "approval_message_ts": "1789118967.837119",
     "last_reply_seen_ts": "1789116346.993349",
     "seeded": true
   },
@@ -279,7 +279,7 @@
     "task_id": "CT-20260911-13",
     "task_name": "Pull content ideas from Cristina Galbato project",
     "instructions": "Review the Cristina Galbato Claude project and continue pulling relevant content ideas, hooks, and examples for the Instagram/LinkedIn workflow.",
-    "status": "In Progress",
+    "status": "For Pamela Approval",
     "priority": "Normal",
     "date_received": "2026-09-11",
     "due_date": "No deadline",
@@ -294,7 +294,7 @@
     "completion_date": "",
     "message_channel": "C0C16B1FMK3",
     "message_ts": "1789116347.228679",
-    "approval_message_ts": null,
+    "approval_message_ts": "1789118968.129649",
     "last_reply_seen_ts": "1789116347.228679",
     "seeded": true
   }
