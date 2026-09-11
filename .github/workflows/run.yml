@@ -1,0 +1,36 @@
+name: Run task bot
+
+on:
+  schedule:
+    # Every 15 minutes. GitHub sometimes delays scheduled runs by a
+    # few minutes during high load — that's normal, not a bug.
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}   # adds a manual "Run workflow" button in the Actions tab
+
+permissions:
+  contents: write   # needed so the job can commit tasks.json / state.json back
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Run bot
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        run: python bot.py
+
+      - name: Commit updated task data
+        run: |
+          git config user.name "task-bot"
+          git config user.email "task-bot@users.noreply.github.com"
+          git add tasks.json state.json
+          git diff --quiet --cached || git commit -m "Bot run: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
